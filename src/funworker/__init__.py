@@ -10,6 +10,7 @@ from funworker.core import (
     Many,
     Pipeline,
     WorkerPool,
+    format_queue_progress,
 )
 
 __all__ = [
@@ -17,6 +18,7 @@ __all__ = [
     "SKIP",
     "Many",
     "CountingQueue",
+    "format_queue_progress",
     "BaseWorker",
     "BaseProducer",
     "BaseProcessor",

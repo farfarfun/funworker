@@ -1,4 +1,11 @@
-from funworker.core.base import SKIP, STOP, BaseWorker, CountingQueue, Many
+from funworker.core.base import (
+    SKIP,
+    STOP,
+    BaseWorker,
+    CountingQueue,
+    Many,
+    format_queue_progress,
+)
 from funworker.core.batch import BaseBatchProcessor
 from funworker.core.consumer import BaseConsumer
 from funworker.core.pipeline import Pipeline
@@ -11,6 +18,7 @@ __all__ = [
     "SKIP",
     "Many",
     "CountingQueue",
+    "format_queue_progress",
     "BaseWorker",
     "BaseProducer",
     "BaseProcessor",
