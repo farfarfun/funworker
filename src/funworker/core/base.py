@@ -40,7 +40,7 @@ class CountingQueue(Queue):
     """带名字 + 累计计数的队列，完全兼容 `queue.Queue`，可以在任何需要普通队列的地方直接替换使用。
 
     `qsize()` 反映"当前"积压；`put_count` 额外累计"历史"总共放入过多少条，配合
-    `WorkerPool.format_progress()` 这类日志方法输出"入X(当前/历史)"格式的进度信息。
+    `WorkerPool.format_progress()` 这类日志方法输出"名字(当前/历史)"格式的进度信息。
     只在需要按名字/累计数追踪某条队列时才需要用它替换普通 `Queue`，其它场景用普通
     `Queue` 完全不受影响。
 

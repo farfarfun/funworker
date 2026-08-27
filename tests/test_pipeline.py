@@ -417,11 +417,11 @@ def test_pipeline_build_and_stage_naming_produces_labeled_progress():
     pipeline.run(install_signal_handlers=False)
 
     line = pipeline.format_progress()
-    assert "RangeProducer(已产出3)" in line
+    assert "RangeProducer" in line
     assert "raw(0/3)" in line
     assert "squarer(1线程/3)" in line
     assert "result(0/3)" in line
-    assert "CollectConsumer(已消费3)" in line
+    assert "CollectConsumer" in line
 
 
 def test_pipeline_add_stage_and_set_consumer_queue_naming():
@@ -445,6 +445,14 @@ def test_pipeline_add_stage_and_set_consumer_queue_naming():
 
     pipeline.run(install_signal_handlers=False)
     assert sorted(pipeline.consumer.results) == [i * i + 1 for i in range(3)]
+
+    line = pipeline.format_progress()
+    assert line.count("mid(") == 1
+    assert line.count("final(") == 1
+    assert (
+        line == "RangeProducer -- input(0/3) -- worker-pool(1线程/3) -- mid(0/3) "
+        "-- add-one(1线程/3) -- final(0/3) -- CollectConsumer"
+    )
 
 
 def test_pipeline_log_progress_does_not_raise():

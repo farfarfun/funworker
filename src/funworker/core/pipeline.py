@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional, Type, Union
 
 from farlog import get_logger
 
-from funworker.core.base import STOP, CountingQueue
+from funworker.core.base import STOP, CountingQueue, format_queue_progress
 from funworker.core.consumer import BaseConsumer
 from funworker.core.pool import ProcessorFactory, WorkerPool
 from funworker.core.processor import BaseProcessor
@@ -233,13 +233,22 @@ class Pipeline:
         return data
 
     def format_progress(self) -> str:
-        """拼接生产者/各级处理单元/消费者各自的 `format_progress()`，输出整条流水线一行进度文本。
+        """输出整条流水线一行进度文本，每条队列只出现一次（挂在写入方那一侧）：
 
-        相邻两段共享同一条队列（例如生产者段末尾的输出队列和第一级段开头的输入队列），是有意为之——方便直接
-        对照两端的数字排查数据是否卡在某一级。
+        生产者自带它写入的第一条队列，消费者自带它读取的最后一条队列；中间每一级处理单元只
+        在"下一站还是另一级处理单元"时才带上自己的输出队列（下一站是消费者时，队列已经由
+        消费者带出，不再重复）。
         """
         parts = [self.producer.format_progress()]
-        parts.extend(stage.format_progress() for stage in self.stages)
+        for i, stage in enumerate(self.stages):
+            stats = stage.stats()
+            segment = f"{stage.name}({stats['num_workers']}线程/{stats['processed']})"
+            is_last_stage = i == len(self.stages) - 1
+            if stage.output_queue is not None and not (
+                is_last_stage and self.consumer is not None
+            ):
+                segment += f" -- {format_queue_progress(stage.output_queue, 'output')}"
+            parts.append(segment)
         if self.consumer is not None:
             parts.append(self.consumer.format_progress())
         return " -- ".join(parts)

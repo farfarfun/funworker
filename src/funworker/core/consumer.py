@@ -71,11 +71,11 @@ class BaseConsumer(BaseWorker):
         }
 
     def format_progress(self) -> str:
-        """按 "X(当前/历史) -- X(已消费)" 格式生成一行日志文本，与
+        """按 "X(当前/历史) -- X" 格式生成一行日志文本，与
         `BaseProducer.format_progress()`/`WorkerPool.format_progress()` 拼在一起即可看到
-        整条流水线各阶段的进度。
+        整条流水线各阶段的进度。已消费数量和队列的当前/历史数字已经能推算出来，不重复展示。
         """
-        return f"{format_queue_progress(self.input_queue, 'input')} -- {self.name}(已消费{self._consumed})"
+        return f"{format_queue_progress(self.input_queue, 'input')} -- {self.name}"
 
     def log_progress(self) -> None:
         """把 :meth:`format_progress` 的结果输出一条 INFO 日志。"""

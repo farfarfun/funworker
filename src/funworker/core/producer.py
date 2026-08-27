@@ -79,11 +79,11 @@ class BaseProducer(BaseWorker):
         }
 
     def format_progress(self) -> str:
-        """按 "X(已产出) -- X(当前/历史)" 格式生成一行日志文本，与
+        """按 "X -- X(当前/历史)" 格式生成一行日志文本，与
         `WorkerPool.format_progress()`/`BaseConsumer.format_progress()` 拼在一起即可看到
-        整条流水线各阶段的进度。
+        整条流水线各阶段的进度。已产出数量和队列的历史累计总数是同一个值，不重复展示。
         """
-        return f"{self.name}(已产出{self._produced}) -- {format_queue_progress(self.output_queue, 'output')}"
+        return f"{self.name} -- {format_queue_progress(self.output_queue, 'output')}"
 
     def log_progress(self) -> None:
         """把 :meth:`format_progress` 的结果输出一条 INFO 日志。"""
