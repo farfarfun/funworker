@@ -99,6 +99,9 @@ print(pipeline.stats())
 - **一拆多（fan-out）/ 多合一（fan-in）**：`process()` 返回 `funworker.Many([...])` 把一条拆成多条；
   继承 `BaseBatchProcessor` 实现 `process_batch(items)` 把多条合成一批处理，停止时缓冲区剩余数据
   也会强制产出，不丢数据。见 [`fan_out_fan_in.py`](example/fan_out_fan_in.py)。
+- **批量消费**：继承 `BaseBatchConsumer` 实现 `consume_batch(items)`，攒够 `batch_size`（默认100）
+  条或超过 `batch_timeout`（默认10秒）没攒满，就会触发一次批量写入；停止时缓冲区剩余数据也会强制
+  消费一次，不丢数据，适合批量落库等下游场景。
 - **运行时进度日志**：`format_progress()`/`log_progress()`（`BaseProducer`/`WorkerPool`/
   `BaseConsumer`/`Pipeline` 都有），统一"名字(当前/历史)"三段式，每一段的名字都可以单独设置；
   配合 `funworker.CountingQueue` 还能看到每条队列的历史累计吞吐量。见

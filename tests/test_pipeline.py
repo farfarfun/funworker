@@ -7,6 +7,7 @@ import pytest
 from funworker import (
     SKIP,
     STOP,
+    BaseBatchConsumer,
     BaseBatchProcessor,
     BaseConsumer,
     BaseProcessor,
@@ -355,6 +356,71 @@ def test_batch_processor_drains_remaining_buffer_on_stop():
     pool.stop(drain=True)
 
     assert list(output_queue.queue) == [sum(range(7))]
+
+
+def test_batch_consumer_flushes_on_size():
+    flushed_batches = []
+    lock = threading.Lock()
+
+    class CollectBatchConsumer(BaseBatchConsumer):
+        def consume_batch(self, items):
+            with lock:
+                flushed_batches.append(list(items))
+
+    input_queue = Queue()
+    for i in range(10):
+        input_queue.put(i)
+
+    consumer = CollectBatchConsumer(input_queue, batch_size=5, get_timeout=0.05)
+    with consumer:
+        input_queue.put(STOP)
+        consumer.join()
+
+    assert sorted(len(b) for b in flushed_batches) == [5, 5]
+    assert sum(len(b) for b in flushed_batches) == 10
+    assert consumer.stats()["consumed"] == 10
+
+
+def test_batch_consumer_flushes_on_timeout():
+    flushed_batches = []
+
+    class CollectBatchConsumer(BaseBatchConsumer):
+        def consume_batch(self, items):
+            flushed_batches.append(list(items))
+
+    input_queue = Queue()
+    input_queue.put(1)
+    input_queue.put(2)
+
+    consumer = CollectBatchConsumer(
+        input_queue, batch_size=1000, batch_timeout=0.1, get_timeout=0.05
+    )
+    with consumer:
+        time.sleep(0.3)
+        input_queue.put(STOP)
+        consumer.join()
+
+    assert flushed_batches == [[1, 2]]
+
+
+def test_batch_consumer_drains_remaining_buffer_on_stop():
+    flushed_batches = []
+
+    class CollectBatchConsumer(BaseBatchConsumer):
+        def consume_batch(self, items):
+            flushed_batches.append(list(items))
+
+    input_queue = Queue()
+    for i in range(7):
+        input_queue.put(i)
+
+    # batch_size 永远攒不满，只能靠停止时的兜底 flush
+    consumer = CollectBatchConsumer(input_queue, batch_size=1000, get_timeout=0.05)
+    with consumer:
+        input_queue.put(STOP)
+        consumer.join()
+
+    assert flushed_batches == [list(range(7))]
 
 
 def test_counting_queue_tracks_historical_total():

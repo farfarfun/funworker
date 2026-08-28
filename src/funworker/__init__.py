@@ -1,6 +1,7 @@
 from funworker.core import (
     SKIP,
     STOP,
+    BaseBatchConsumer,
     BaseBatchProcessor,
     BaseConsumer,
     BaseProcessor,
@@ -24,6 +25,7 @@ __all__ = [
     "BaseProcessor",
     "BaseBatchProcessor",
     "BaseConsumer",
+    "BaseBatchConsumer",
     "WorkerPool",
     "Pipeline",
 ]

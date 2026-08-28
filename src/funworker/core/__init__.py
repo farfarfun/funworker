@@ -7,6 +7,7 @@ from funworker.core.base import (
     format_queue_progress,
 )
 from funworker.core.batch import BaseBatchProcessor
+from funworker.core.batch_consumer import BaseBatchConsumer
 from funworker.core.consumer import BaseConsumer
 from funworker.core.pipeline import Pipeline
 from funworker.core.pool import WorkerPool
@@ -24,6 +25,7 @@ __all__ = [
     "BaseProcessor",
     "BaseBatchProcessor",
     "BaseConsumer",
+    "BaseBatchConsumer",
     "WorkerPool",
     "Pipeline",
 ]
