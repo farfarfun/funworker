@@ -1,14 +1,14 @@
 [build-system]
-requires = ["setuptools>=61"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
 name = "funworker"
 description = "轻量级线程流水线框架：生产者/处理单元/消费者通过队列解耦，多线程处理一键包装"
 readme = "README.md"
-version = "0.1.5"
+version = "0.1.6"
 requires-python = ">=3.10"
-dependencies = ["farlog>=1.0.0"]
+dependencies = ["farlog>=1.1.7"]
 license = "MIT"
 license-files = ["LICENSE"]
 
@@ -30,3 +30,15 @@ email = "farfarfun@qq.com"
 Organization = "https://github.com/farfarfun"
 Repository = "https://github.com/farfarfun/funworker"
 Releases = "https://github.com/farfarfun/funworker/releases"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/funworker"]
+
+[dependency-groups]
+dev = ["pytest>=7.0.0", "ruff>=0.9.0"]
+
+[tool.ruff]
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I", "UP"]

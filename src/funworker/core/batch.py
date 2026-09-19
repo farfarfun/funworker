@@ -2,7 +2,7 @@
 
 import time
 from abc import abstractmethod
-from typing import Any, List, Optional
+from typing import Any
 
 from funworker.core.base import SKIP
 from funworker.core.processor import BaseProcessor
@@ -23,22 +23,22 @@ class BaseBatchProcessor(BaseProcessor):
 
     Args:
         batch_size (int, optional): 攒够多少条触发一次批处理，默认32。
-        batch_timeout (Optional[float], optional): 缓冲区未满时的最长等待秒数，默认None
+        batch_timeout (float | None, optional): 缓冲区未满时的最长等待秒数，默认None
             表示不做超时触发（只按数量攒批）。
     """
 
-    def __init__(self, *, batch_size: int = 32, batch_timeout: Optional[float] = None):
+    def __init__(self, *, batch_size: int = 32, batch_timeout: float | None = None):
         self.batch_size = batch_size
         self.batch_timeout = batch_timeout
-        self._buffer: List[Any] = []
-        self._buffer_started_at: Optional[float] = None
+        self._buffer: list[Any] = []
+        self._buffer_started_at: float | None = None
 
     @abstractmethod
-    def process_batch(self, items: List[Any]) -> Any:
+    def process_batch(self, items: list[Any]) -> Any:
         """处理一批数据，由子类实现。
 
         Args:
-            items (List[Any]): 攒够的一批数据，长度在 `1` 到 `batch_size` 之间。
+            items (list[Any]): 攒够的一批数据，长度在 `1` 到 `batch_size` 之间。
 
         Returns:
             Any: 产出结果，语义与 `BaseProcessor.process` 一致：`funworker.SKIP` 表示

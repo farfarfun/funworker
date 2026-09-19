@@ -3,7 +3,7 @@
 import time
 from abc import abstractmethod
 from queue import Full, Queue
-from typing import Any, Dict, Optional
+from typing import Any
 
 from farlog import get_logger
 
@@ -28,7 +28,7 @@ class BaseProducer(BaseWorker):
     """
 
     def __init__(
-        self, output_queue: Queue, *, interval: float = 0, name: Optional[str] = None
+        self, output_queue: Queue, *, interval: float = 0, name: str | None = None
     ):
         super().__init__(name=name)
         self.output_queue = output_queue
@@ -70,7 +70,7 @@ class BaseProducer(BaseWorker):
             if self.interval:
                 time.sleep(self.interval)
 
-    def stats(self) -> Dict[str, Any]:
+    def stats(self) -> dict[str, Any]:
         """返回运行状态：已生产条数、下游队列长度、线程是否存活。"""
         return {
             "produced": self._produced,

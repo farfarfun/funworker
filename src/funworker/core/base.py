@@ -3,7 +3,6 @@
 import threading
 from abc import ABC, abstractmethod
 from queue import Queue
-from typing import Optional
 
 from farlog import get_logger
 
@@ -46,16 +45,16 @@ class CountingQueue(Queue):
 
     Args:
         maxsize (int, optional): 同 `queue.Queue`，默认0（不限）。
-        name (Optional[str], optional): 队列名字，用于日志展示，默认"queue"。
+        name (str | None, optional): 队列名字，用于日志展示，默认"queue"。
     """
 
-    def __init__(self, maxsize: int = 0, *, name: Optional[str] = None):
+    def __init__(self, maxsize: int = 0, *, name: str | None = None):
         super().__init__(maxsize=maxsize)
         self.name = name or "queue"
         self._put_count = 0
         self._put_count_lock = threading.Lock()
 
-    def put(self, item, block: bool = True, timeout: Optional[float] = None) -> None:
+    def put(self, item, block: bool = True, timeout: float | None = None) -> None:
         super().put(item, block=block, timeout=timeout)
         if item is STOP:
             return  # STOP 只是停止信号，不是业务数据，不计入历史总数
@@ -69,7 +68,7 @@ class CountingQueue(Queue):
             return self._put_count
 
 
-def format_queue_progress(q: Optional[Queue], fallback: str) -> str:
+def format_queue_progress(q: Queue | None, fallback: str) -> str:
     """生成 "名字(当前/历史)" 这一段进度文本，供 Producer/WorkerPool/Consumer 的
     `format_progress()` 复用。
 
@@ -93,10 +92,10 @@ class BaseWorker(threading.Thread, ABC):
     避免线程静默崩溃却没有任何人知道。
     """
 
-    def __init__(self, *, name: Optional[str] = None):
+    def __init__(self, *, name: str | None = None):
         super().__init__(name=name or self.__class__.__name__, daemon=True)
         self._stop_event = threading.Event()
-        self._error: Optional[BaseException] = None
+        self._error: BaseException | None = None
 
     def on_start(self) -> None:
         """线程启动时调用一次。"""
@@ -136,7 +135,7 @@ class BaseWorker(threading.Thread, ABC):
         if self._error is not None:
             raise self._error
 
-    def join(self, timeout: Optional[float] = None) -> None:
+    def join(self, timeout: float | None = None) -> None:
         """等待线程结束；线程已结束且运行期间出错时，会重新抛出该异常。"""
         super().join(timeout=timeout)
         if not self.is_alive():

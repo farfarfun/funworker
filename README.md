@@ -16,7 +16,14 @@
 ## 安装
 
 ```bash
-pip install -e .
+pip install funworker
+```
+
+开发环境使用 uv：
+
+```bash
+uv sync --dev
+uv run pytest
 ```
 
 ## 快速上手
@@ -120,3 +127,16 @@ print(pipeline.stats())
   不会打断整条流水线；但线程自身崩溃（如 `on_start` 抛异常）会被显式传播给调用方，不会被吞掉。
 - **可扩展**：`Pipeline` 是对 `BaseProducer` + 一至多级 `WorkerPool` + `BaseConsumer` 的编排，
   `add_stage()`/`set_consumer()` 让多级处理流水线的写法和单级一样简单。
+
+---
+
+## 关于 farfarfun
+
+[farfarfun](https://github.com/farfarfun) 是一个专注于实用工具库的开源组织，
+涵盖云存储、数据处理、AI、多媒体与开发工具链等方向。
+
+- 🏠 组织主页：<https://github.com/farfarfun>
+- 📦 PyPI：<https://pypi.org/user/niuliangtao/>
+- 📧 联系：farfarfun@qq.com
+
+本项目基于 [MIT](LICENSE) 协议开源。

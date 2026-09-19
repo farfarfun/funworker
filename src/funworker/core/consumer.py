@@ -2,7 +2,7 @@
 
 from abc import abstractmethod
 from queue import Empty, Queue
-from typing import Any, Dict, Optional
+from typing import Any
 
 from farlog import get_logger
 
@@ -24,7 +24,7 @@ class BaseConsumer(BaseWorker):
         input_queue: Queue,
         *,
         get_timeout: float = 0.5,
-        name: Optional[str] = None,
+        name: str | None = None,
     ):
         super().__init__(name=name)
         self.input_queue = input_queue
@@ -61,7 +61,7 @@ class BaseConsumer(BaseWorker):
             finally:
                 self.input_queue.task_done()
 
-    def stats(self) -> Dict[str, Any]:
+    def stats(self) -> dict[str, Any]:
         """返回运行状态：已消费/失败条数、上游队列长度、线程是否存活。"""
         return {
             "consumed": self._consumed,

@@ -3,7 +3,7 @@
 import signal
 import threading
 from queue import Queue
-from typing import Any, Dict, List, Optional, Type, Union
+from typing import Any
 
 from farlog import get_logger
 
@@ -24,7 +24,7 @@ class Pipeline:
     Args:
         producer (BaseProducer): 生产者，负责向第一级 `WorkerPool.input_queue` 写入数据。
         pool (WorkerPool): 第一级处理单元线程池；如需多级处理，用 :meth:`add_stage` 继续追加。
-        consumer (Optional[BaseConsumer], optional): 消费者，读取最后一级的 `output_queue`；
+        consumer (BaseConsumer | None, optional): 消费者，读取最后一级的 `output_queue`；
             为空表示处理单元的输出即为流水线终点。
     """
 
@@ -32,10 +32,10 @@ class Pipeline:
         self,
         producer: BaseProducer,
         pool: WorkerPool,
-        consumer: Optional[BaseConsumer] = None,
+        consumer: BaseConsumer | None = None,
     ):
         self.producer = producer
-        self.stages: List[WorkerPool] = [pool]
+        self.stages: list[WorkerPool] = [pool]
         self.consumer = consumer
         self._started = False
         self._stop_lock = threading.Lock()
@@ -49,25 +49,25 @@ class Pipeline:
     @classmethod
     def build(
         cls,
-        producer_cls: Type[BaseProducer],
-        processor: Union[BaseProcessor, ProcessorFactory],
-        consumer_cls: Optional[Type[BaseConsumer]] = None,
+        producer_cls: type[BaseProducer],
+        processor: BaseProcessor | ProcessorFactory,
+        consumer_cls: type[BaseConsumer] | None = None,
         *,
-        num_workers: Optional[int] = None,
+        num_workers: int | None = None,
         input_maxsize: int = 0,
         output_maxsize: int = 0,
         input_name: str = "input",
         output_name: str = "output",
         processor_name: str = "worker-pool",
-        producer_kwargs: Optional[Dict[str, Any]] = None,
-        consumer_kwargs: Optional[Dict[str, Any]] = None,
+        producer_kwargs: dict[str, Any] | None = None,
+        consumer_kwargs: dict[str, Any] | None = None,
     ) -> "Pipeline":
         """便捷构造：自动创建两条队列，下游只需要提供 Producer/Processor/Consumer 的实现。
 
         Args:
             producer_cls (Type[BaseProducer]): 生产者类，会以 `output_queue=<自动创建的队列>` 实例化。
             processor (BaseProcessor | Callable[[], BaseProcessor]): 处理单元实例或工厂函数。
-            consumer_cls (Optional[Type[BaseConsumer]], optional): 消费者类；为空表示不需要消费者，
+            consumer_cls (type[BaseConsumer] | None, optional): 消费者类；为空表示不需要消费者，
                 处理单元的输出留在队列里由调用方自行处理，或者后续用 :meth:`set_consumer` 追加。
             num_workers (int, optional): 处理单元线程数，默认取检测到的 CPU 核数。
             input_maxsize (int, optional): 生产者->处理单元 队列容量上限，默认0（不限）。
@@ -76,11 +76,11 @@ class Pipeline:
                 日志展示，默认"input"。
             output_name (str, optional): 处理单元->消费者 队列的名字，同上，默认"output"。
             processor_name (str, optional): 第一级处理单元线程池的名字，同上，默认"worker-pool"。
-            producer_kwargs (Optional[dict], optional): 透传给 `producer_cls` 构造函数的其它参数。
-            consumer_kwargs (Optional[dict], optional): 透传给 `consumer_cls` 构造函数的其它参数。
+            producer_kwargs (dict | None, optional): 透传给 `producer_cls` 构造函数的其它参数。
+            consumer_kwargs (dict | None, optional): 透传给 `consumer_cls` 构造函数的其它参数。
         """
         input_queue: Queue = CountingQueue(maxsize=input_maxsize, name=input_name)
-        output_queue: Optional[Queue] = (
+        output_queue: Queue | None = (
             CountingQueue(maxsize=output_maxsize, name=output_name)
             if consumer_cls is not None
             else None
@@ -104,9 +104,9 @@ class Pipeline:
 
     def add_stage(
         self,
-        processor: Union[BaseProcessor, ProcessorFactory],
+        processor: BaseProcessor | ProcessorFactory,
         *,
-        num_workers: Optional[int] = None,
+        num_workers: int | None = None,
         maxsize: int = 0,
         queue_name: str = "output",
         **pool_kwargs: Any,
@@ -136,7 +136,7 @@ class Pipeline:
 
     def set_consumer(
         self,
-        consumer_cls: Type[BaseConsumer],
+        consumer_cls: type[BaseConsumer],
         *,
         maxsize: int = 0,
         queue_name: str = "output",
@@ -200,7 +200,7 @@ class Pipeline:
         """
         self.start()
 
-        old_handlers: Dict[int, Any] = {}
+        old_handlers: dict[int, Any] = {}
         can_install = (
             install_signal_handlers
             and threading.current_thread() is threading.main_thread()
@@ -222,9 +222,9 @@ class Pipeline:
                 signal.signal(sig, handler)
             self.stop()
 
-    def stats(self) -> Dict[str, Any]:
+    def stats(self) -> dict[str, Any]:
         """聚合各阶段的运行状态，便于监控队列积压、处理/失败/重试计数。"""
-        data: Dict[str, Any] = {
+        data: dict[str, Any] = {
             "producer": self.producer.stats(),
             "stages": [stage.stats() for stage in self.stages],
         }

@@ -2,9 +2,10 @@
 
 import os
 import threading
+from collections.abc import Callable
 from queue import Empty, Queue
 from threading import Thread
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any
 
 from farlog import get_logger
 
@@ -39,10 +40,10 @@ class WorkerPool:
             要求线程安全），或者用于给每个线程创建独立实例的工厂函数/类（推荐，处理单元可以
             放心持有连接等非线程安全资源）。
         input_queue (Queue): 上游队列。
-        output_queue (Optional[Queue], optional): 下游队列，为空表示处理单元是流水线终点。
+        output_queue (Queue | None, optional): 下游队列，为空表示处理单元是流水线终点。
         num_workers (int, optional): 线程数，默认取检测到的 CPU 核数。
         max_retries (int, optional): 处理失败后的最大重试次数，默认0表示不重试。
-        dead_letter_queue (Optional[Queue], optional): 重试耗尽后写入的死信队列，默认None表示
+        dead_letter_queue (Queue | None, optional): 重试耗尽后写入的死信队列，默认None表示
             直接丢弃（仅记录日志）。
         poll_interval (float, optional): 取不到新数据时的轮询超时，默认0.5秒；每次超时都会调用
             一次 `processor.on_idle()`（用于批处理超时触发等场景），同时用于定期检查停止信号。
@@ -51,13 +52,13 @@ class WorkerPool:
 
     def __init__(
         self,
-        processor: Union[BaseProcessor, ProcessorFactory],
+        processor: BaseProcessor | ProcessorFactory,
         input_queue: Queue,
-        output_queue: Optional[Queue] = None,
+        output_queue: Queue | None = None,
         *,
-        num_workers: Optional[int] = None,
+        num_workers: int | None = None,
         max_retries: int = 0,
-        dead_letter_queue: Optional[Queue] = None,
+        dead_letter_queue: Queue | None = None,
         poll_interval: float = 0.5,
         name: str = "worker-pool",
     ):
@@ -74,12 +75,12 @@ class WorkerPool:
         self.dead_letter_queue = dead_letter_queue
         self.poll_interval = poll_interval
         self.name = name
-        self._threads: List[Thread] = []
+        self._threads: list[Thread] = []
         self._processed = 0
         self._failed = 0
         self._retries = 0
         self._counter_lock = threading.Lock()
-        self._errors: List[BaseException] = []
+        self._errors: list[BaseException] = []
         self._errors_lock = threading.Lock()
         self._stop_lock = threading.Lock()
         self._stopped = False
@@ -203,7 +204,7 @@ class WorkerPool:
             t.join()
         self.raise_if_failed()
 
-    def stats(self) -> Dict[str, Any]:
+    def stats(self) -> dict[str, Any]:
         """返回运行状态：处理/失败/重试计数、队列长度、存活线程数。"""
         with self._counter_lock:
             processed, failed, retries = self._processed, self._failed, self._retries

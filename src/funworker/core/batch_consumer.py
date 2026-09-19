@@ -3,7 +3,7 @@
 import time
 from abc import abstractmethod
 from queue import Empty, Queue
-from typing import Any, List, Optional
+from typing import Any
 
 from farlog import get_logger
 
@@ -29,7 +29,7 @@ class BaseBatchConsumer(BaseConsumer):
         get_timeout (float, optional): 队列取数据的超时时间，同时也是检查
             `batch_timeout` 是否到期的轮询间隔，默认0.5秒（应明显小于 `batch_timeout`，
             否则超时触发会有较大延迟误差）。
-        name (Optional[str], optional): 线程名。
+        name (str | None, optional): 线程名。
     """
 
     def __init__(
@@ -39,26 +39,26 @@ class BaseBatchConsumer(BaseConsumer):
         batch_size: int = 100,
         batch_timeout: float = 10.0,
         get_timeout: float = 0.5,
-        name: Optional[str] = None,
+        name: str | None = None,
     ):
         super().__init__(input_queue, get_timeout=get_timeout, name=name)
         self.batch_size = batch_size
         self.batch_timeout = batch_timeout
-        self._buffer: List[Any] = []
-        self._buffer_started_at: Optional[float] = None
+        self._buffer: list[Any] = []
+        self._buffer_started_at: float | None = None
 
     @abstractmethod
-    def consume_batch(self, items: List[Any]) -> None:
+    def consume_batch(self, items: list[Any]) -> None:
         """消费一批数据，由子类实现，无需返回值。
 
         Args:
-            items (List[Any]): 攒够的一批数据，长度在 `1` 到 `batch_size` 之间。
+            items (list[Any]): 攒够的一批数据，长度在 `1` 到 `batch_size` 之间。
         """
 
     def consume(self, item: Any) -> None:
         """`BaseConsumer` 要求实现的单条接口，批量消费者不走这条路径，不会被调用。"""
 
-    def on_batch_error(self, items: List[Any], exc: Exception) -> None:
+    def on_batch_error(self, items: list[Any], exc: Exception) -> None:
         """消费一批数据抛出异常时调用，默认记录日志并跳过整批。"""
         logger.exception(f"consume_batch error, size={len(items)}, err={exc}")
 
