@@ -2,7 +2,9 @@
 
 import threading
 from abc import ABC, abstractmethod
+from collections.abc import Iterable
 from queue import Queue
+from typing import Any
 
 from farlog import get_logger
 
@@ -28,7 +30,7 @@ class Many:
 
     __slots__ = ("items",)
 
-    def __init__(self, items):
+    def __init__(self, items: Iterable[Any]):
         self.items = list(items)
 
     def __repr__(self) -> str:
@@ -54,7 +56,7 @@ class CountingQueue(Queue):
         self._put_count = 0
         self._put_count_lock = threading.Lock()
 
-    def put(self, item, block: bool = True, timeout: float | None = None) -> None:
+    def put(self, item: Any, block: bool = True, timeout: float | None = None) -> None:
         super().put(item, block=block, timeout=timeout)
         if item is STOP:
             return  # STOP 只是停止信号，不是业务数据，不计入历史总数

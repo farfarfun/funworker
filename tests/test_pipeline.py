@@ -1,5 +1,4 @@
 import threading
-import time
 from queue import Queue
 
 import pytest
@@ -316,11 +315,14 @@ def test_batch_processor_flushes_on_size():
 
 
 def test_batch_processor_flushes_on_timeout_via_on_idle():
+    flushed = threading.Event()
+
     class SumBatchProcessor(BaseBatchProcessor):
         def __init__(self):
             super().__init__(batch_size=1000, batch_timeout=0.1)
 
         def process_batch(self, items):
+            flushed.set()
             return sum(items)
 
     input_queue = Queue()
@@ -332,8 +334,10 @@ def test_batch_processor_flushes_on_timeout_via_on_idle():
         SumBatchProcessor, input_queue, output_queue, num_workers=1, poll_interval=0.05
     )
     pool.start()
-    time.sleep(0.3)
-    pool.stop(drain=False)
+    try:
+        assert flushed.wait(timeout=1)
+    finally:
+        pool.stop(drain=False)
 
     assert list(output_queue.queue) == [3]
 
@@ -383,10 +387,12 @@ def test_batch_consumer_flushes_on_size():
 
 def test_batch_consumer_flushes_on_timeout():
     flushed_batches = []
+    flushed = threading.Event()
 
     class CollectBatchConsumer(BaseBatchConsumer):
         def consume_batch(self, items):
             flushed_batches.append(list(items))
+            flushed.set()
 
     input_queue = Queue()
     input_queue.put(1)
@@ -396,7 +402,7 @@ def test_batch_consumer_flushes_on_timeout():
         input_queue, batch_size=1000, batch_timeout=0.1, get_timeout=0.05
     )
     with consumer:
-        time.sleep(0.3)
+        assert flushed.wait(timeout=1)
         input_queue.put(STOP)
         consumer.join()
 
