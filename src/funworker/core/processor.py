@@ -61,6 +61,10 @@ class BaseProcessor(ABC):
     def on_error(self, item: Any, exc: Exception, *, will_retry: bool = False) -> None:
         """处理单条数据抛出异常时调用，默认记录日志（并在不再重试时丢弃该条数据）。
 
+        默认日志只记录 `item` 的类型名，不 repr 完整内容（`item` 可能携带业务敏感数据，
+        如凭据、用户隐私字段）；完整内容仅在调用方把日志级别显式调到 DEBUG 时才会落盘，
+        供排查问题使用。
+
         Args:
             item (Any): 处理失败的数据。
             exc (Exception): 捕获到的异常。
@@ -68,4 +72,7 @@ class BaseProcessor(ABC):
                 `True`，此时数据会被重新放回队列，不会丢失。
         """
         action = "retrying" if will_retry else "dropping"
-        logger.exception(f"process error ({action}), item={item!r}, err={exc}")
+        logger.exception(
+            f"process error ({action}), item_type={type(item).__name__}, err={exc}"
+        )
+        logger.debug(f"process error ({action}) item detail, item={item!r}")

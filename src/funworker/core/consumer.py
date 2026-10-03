@@ -37,8 +37,14 @@ class BaseConsumer(BaseWorker):
         """消费一条数据，由子类实现，无需返回值。"""
 
     def on_error(self, item: Any, exc: Exception) -> None:
-        """消费单条数据抛出异常时调用，默认记录日志并跳过该条数据。"""
-        logger.exception(f"consume error, item={item!r}, err={exc}")
+        """消费单条数据抛出异常时调用，默认记录日志并跳过该条数据。
+
+        默认日志只记录 `item` 的类型名，不 repr 完整内容（`item` 可能携带业务敏感数据，
+        如凭据、用户隐私字段）；完整内容仅在调用方把日志级别显式调到 DEBUG 时才会落盘，
+        供排查问题使用。
+        """
+        logger.exception(f"consume error, item_type={type(item).__name__}, err={exc}")
+        logger.debug(f"consume error item detail, item={item!r}")
 
     def _loop(self) -> None:
         while True:
