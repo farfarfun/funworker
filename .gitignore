@@ -194,3 +194,4 @@ hubs/rss/source
 .specstory/
 CLAUDE.local.md
 AGENTS.local.md
+uv.lock
