@@ -9,6 +9,9 @@
 ### 修复
 
 - 将 `farlog` 依赖下限更新到组织规范要求的版本。
+- 补全 `Many.__init__`、`CountingQueue.put` 的参数类型标注；批处理超时相关测试改用
+  `threading.Event` 等待替代固定 `time.sleep`，避免在慢环境下产生不确定性
+  （farfarfun/todo-list#619）。
 
 ### 变更
 
