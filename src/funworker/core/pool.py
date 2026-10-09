@@ -200,6 +200,7 @@ class WorkerPool:
         self.raise_if_failed()
 
     def join(self) -> None:
+        """等待所有工作线程结束；任一线程失败时重新抛出第一个异常。"""
         for t in self._threads:
             t.join()
         self.raise_if_failed()

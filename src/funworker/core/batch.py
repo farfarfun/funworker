@@ -46,6 +46,14 @@ class BaseBatchProcessor(BaseProcessor):
         """
 
     def process(self, item: Any) -> Any:
+        """将一条数据加入缓冲；攒够批次时处理，否则返回 ``SKIP``。
+
+        Args:
+            item: 待缓冲的输入数据。
+
+        Returns:
+            满批时返回 ``process_batch`` 的结果，否则返回 ``SKIP``。
+        """
         if self._buffer_started_at is None:
             self._buffer_started_at = time.monotonic()
         self._buffer.append(item)
@@ -54,6 +62,7 @@ class BaseBatchProcessor(BaseProcessor):
         return SKIP
 
     def on_idle(self) -> Any:
+        """空闲轮询时按超时阈值处理未满的缓冲批次。"""
         if (
             self._buffer
             and self.batch_timeout is not None
@@ -63,6 +72,7 @@ class BaseBatchProcessor(BaseProcessor):
         return SKIP
 
     def on_drain(self) -> Any:
+        """停止排空时处理缓冲的剩余数据，避免丢失未满批次。"""
         if self._buffer:
             return self._flush()
         return SKIP
