@@ -57,6 +57,13 @@ class CountingQueue(Queue):
         self._put_count_lock = threading.Lock()
 
     def put(self, item: Any, block: bool = True, timeout: float | None = None) -> None:
+        """放入数据并累计业务项数量。
+
+        Args:
+            item: 待放入的对象；停止哨兵不计入累计数。
+            block: 队列满时是否阻塞。
+            timeout: 阻塞等待的最长秒数；仅 ``block`` 为真时生效。
+        """
         super().put(item, block=block, timeout=timeout)
         if item is STOP:
             return  # STOP 只是停止信号，不是业务数据，不计入历史总数
@@ -111,9 +118,11 @@ class BaseWorker(threading.Thread, ABC):
 
     @property
     def stopping(self) -> bool:
+        """是否已收到停止请求；子类循环应据此尽快退出。"""
         return self._stop_event.is_set()
 
     def run(self) -> None:
+        """执行启动钩子、主循环和停止钩子，并保存线程内异常供 ``join`` 抛出。"""
         try:
             self.on_start()
             self._loop()
